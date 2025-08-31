@@ -7,6 +7,7 @@ import {
   updateProfile,
   addMarks,
   deleteMarks,
+  getUserDashboard,
 } from "../controllers/authController.js";
 import { protect } from "../middlewares/authMiddleware.js";
 
@@ -20,5 +21,6 @@ router.get("/profile", protect, getProfile);
 router.put("/profile", protect, updateProfile);
 router.post("/marks", protect, addMarks);
 router.delete("/marks/:markId", protect, deleteMarks);
+router.get("/dashboard", protect, getUserDashboard);
 
 export default router;

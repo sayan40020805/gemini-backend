@@ -1,5 +1,6 @@
 import EnhancedExam from "../models/EnhancedExam.js";
 import EnhancedSubmission from "../models/EnhancedSubmission.js";
+import User from "../models/User.js";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
 // Check if GEMINI_API_KEY is available
@@ -197,6 +198,19 @@ export const submitAndScoreExam = async (req, res) => {
     });
 
     await submission.save();
+
+    // Automatically add to user's marks
+    const user = await User.findById(userId);
+    if (user) {
+      user.marks.push({
+        examName: exam.title,
+        marks: score,
+        totalMarks: totalQuestions,
+        percentage,
+        date: new Date()
+      });
+      await user.save();
+    }
 
     res.status(201).json({
       success: true,

@@ -1,5 +1,6 @@
 import Exam from "../models/Exam.js";
 import Submission from "../models/Submission.js";
+import User from "../models/User.js";
 
 // POST /api/exams/create
 export const createExam = async (req, res) => {
@@ -71,6 +72,12 @@ export const submitExam = async (req, res) => {
       return res.status(400).json({ error: "Missing required fields" });
     }
 
+    // Get exam details for marks entry
+    const exam = await Exam.findById(examId);
+    if (!exam) {
+      return res.status(404).json({ error: "Exam not found" });
+    }
+
     const submission = new Submission({
       userId,
       examId,
@@ -78,7 +85,25 @@ export const submitExam = async (req, res) => {
     });
 
     await submission.save();
-    res.status(201).json({ message: "Submission successful", submission });
+
+    // Automatically add to user's marks (placeholder for traditional exams)
+    const user = await User.findById(userId);
+    if (user) {
+      user.marks.push({
+        examName: exam.title,
+        marks: 0, // Will be updated when graded
+        totalMarks: 100, // Default total marks
+        percentage: 0, // Will be updated when graded
+        date: new Date()
+      });
+      await user.save();
+    }
+
+    res.status(201).json({
+      message: "Submission successful",
+      submission,
+      note: "Exam submitted successfully. Results will be available after grading."
+    });
   } catch (err) {
     console.error("Submit exam error:", err.message);
     res.status(500).json({ error: "Failed to submit exam" });

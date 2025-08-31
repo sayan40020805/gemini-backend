@@ -1,5 +1,7 @@
 import Course from "../models/Course.js";
 import User from "../models/User.js";
+import Submission from "../models/Submission.js";
+import EnhancedSubmission from "../models/EnhancedSubmission.js";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
 
@@ -208,5 +210,92 @@ export const deleteMarks = async (req, res) => {
     res.status(200).json({ message: "Marks deleted successfully", marks: user.marks });
   } catch (err) {
     res.status(500).json({ error: "Failed to delete marks" });
+  }
+};
+
+// Get user dashboard with exam history
+export const getUserDashboard = async (req, res) => {
+  try {
+    const user = req.user;
+
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    // Get detailed exam history from both submission models
+    const [traditionalSubmissions, enhancedSubmissions] = await Promise.all([
+      Submission.find({ userId: user._id })
+        .populate('examId', 'title department semester')
+        .sort({ submittedAt: -1 })
+        .limit(10),
+      EnhancedSubmission.find({ userId: user._id })
+        .populate('examId', 'title subject difficulty')
+        .sort({ submittedAt: -1 })
+        .limit(10)
+    ]);
+
+    // Format traditional exam history
+    const traditionalHistory = traditionalSubmissions.map(sub => ({
+      id: sub._id,
+      examName: sub.examId?.title || 'Traditional Exam',
+      subject: sub.examId?.department || 'General',
+      type: 'traditional',
+      date: sub.submittedAt,
+      status: 'Submitted (Pending Grading)',
+      score: 0,
+      totalQuestions: 0,
+      percentage: 0
+    }));
+
+    // Format enhanced exam history
+    const enhancedHistory = enhancedSubmissions.map(sub => ({
+      id: sub._id,
+      examName: sub.examId?.title || 'Enhanced Exam',
+      subject: sub.examId?.subject || 'General',
+      type: 'enhanced',
+      date: sub.submittedAt,
+      status: 'Completed',
+      score: sub.score,
+      totalQuestions: sub.results.length,
+      percentage: sub.results.length > 0 ? (sub.score / sub.results.length) * 100 : 0
+    }));
+
+    // Combine and sort all exam history
+    const examHistory = [...traditionalHistory, ...enhancedHistory]
+      .sort((a, b) => new Date(b.date) - new Date(a.date))
+      .slice(0, 20); // Limit to 20 most recent
+
+    // Calculate dashboard statistics
+    const totalExams = examHistory.length;
+    const completedExams = enhancedHistory.length;
+    const averageScore = enhancedHistory.length > 0
+      ? enhancedHistory.reduce((sum, exam) => sum + exam.percentage, 0) / enhancedHistory.length
+      : 0;
+
+    res.status(200).json({
+      success: true,
+      dashboard: {
+        user: {
+          id: user._id,
+          name: user.name,
+          email: user.email,
+          college: user.college
+        },
+        marks: user.marks, // Automatically populated exam results
+        examHistory,
+        statistics: {
+          totalExams,
+          completedExams,
+          pendingGrading: traditionalHistory.length,
+          averageScore: Math.round(averageScore * 100) / 100
+        }
+      }
+    });
+  } catch (err) {
+    console.error("Get user dashboard error:", err.message);
+    res.status(500).json({
+      success: false,
+      error: `Failed to fetch dashboard: ${err.message}`
+    });
   }
 };
