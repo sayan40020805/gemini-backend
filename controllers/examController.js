@@ -31,8 +31,22 @@ export const createExam = async (req, res) => {
   }
 };
 
+export const getExamById = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const exam = await Exam.findById(id);
+    if (!exam) {
+      return res.status(404).json({ error: "Exam not found" });
+    }
+    res.status(200).json(exam);
+  } catch (err) {
+    console.error("Get exam by ID error:", err.message);
+    res.status(500).json({ error: "Failed to fetch exam" });
+  }
+};
+
 // GET /api/exams?department=CSE&semester=4
-export const getExams = async (req, res) => {
+export const getAllExams = async (req, res) => {
   try {
     const { department, semester } = req.query;
     const filter = {};
@@ -68,5 +82,41 @@ export const submitExam = async (req, res) => {
   } catch (err) {
     console.error("Submit exam error:", err.message);
     res.status(500).json({ error: "Failed to submit exam" });
+  }
+};
+
+// GET /api/exams/user/:userId/history
+export const getUserExamHistory = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    
+    const submissions = await Submission.find({ userId })
+      .populate('examId', 'title department semester')
+      .sort({ submittedAt: -1 });
+
+    // Format the submissions to match dashboard expectations
+    const formattedSubmissions = submissions.map(sub => ({
+      examName: sub.examId?.title || 'Traditional Exam',
+      marks: 0, // Traditional exams don't have automatic scoring
+      totalMarks: 100,
+      percentage: 0,
+      date: sub.submittedAt,
+      subject: sub.examId?.department || 'General',
+      type: 'traditional',
+      score: 0,
+      correctAnswers: 0,
+      totalQuestions: 0
+    }));
+
+    res.status(200).json({
+      success: true,
+      submissions: formattedSubmissions
+    });
+  } catch (err) {
+    console.error("Get user exam history error:", err.message);
+    res.status(500).json({ 
+      success: false,
+      error: `Failed to fetch exam history: ${err.message}` 
+    });
   }
 };

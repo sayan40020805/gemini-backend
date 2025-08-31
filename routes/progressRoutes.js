@@ -1,12 +1,12 @@
 import express from "express";
 import {
   updateProgress,
-  getProgress,
+  getUserProgress,
 } from "../controllers/progressController.js";
 
 const router = express.Router();
 
 router.post("/update", updateProgress);
-router.get("/:userId/:courseId", getProgress);
+router.get("/:userId/:courseId", getUserProgress);
 
 export default router;

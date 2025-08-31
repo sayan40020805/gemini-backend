@@ -1,19 +1,23 @@
 import express from "express";
 import {
-  createCourse,
-  getAllCourses,
-  getCourseById,
+  saveCourse,
+  getUserCourses,
+  deleteCourse,
 } from "../controllers/courseController.js";
+import { getEnhancedCourses } from "../controllers/enhancedCourseController.js";
 
 const router = express.Router();
 
-// POST: Create a new course
-router.post("/create", createCourse);
+// POST: Save a new course
+router.post("/save", saveCourse);
 
-// GET: Fetch all courses
-router.get("/", getAllCourses);
+// GET: Fetch all courses for a user
+router.get("/user/:userId", getUserCourses);
 
-// GET: Fetch single course by ID
-router.get("/:id", getCourseById);
+// GET: Fetch all courses (for free courses page)
+router.get("/", getEnhancedCourses);
+
+// DELETE: Delete a course by ID
+router.delete("/:id", deleteCourse);
 
 export default router;

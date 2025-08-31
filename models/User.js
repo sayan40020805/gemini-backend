@@ -1,30 +1,57 @@
 import mongoose from "mongoose";
 
-const noteSchema = new mongoose.Schema(
-  {
-    subject: {
-      type: String,
-      required: true,
-    },
-    topic: {
-      type: String,
-      required: true,
-    },
-    department: {
-      type: String,
-      required: true,
-    },
-    semester: {
-      type: Number,
-      required: true,
-    },
-    noteLink: {
-      type: String,
-      required: true,
-    },
+const marksSchema = new mongoose.Schema({
+  examName: {
+    type: String,
+    required: true,
   },
-  { timestamps: true }
-);
+  marks: {
+    type: Number,
+    required: true,
+  },
+  totalMarks: {
+    type: Number,
+    required: true,
+  },
+  percentage: {
+    type: Number,
+    required: true,
+  },
+  date: {
+    type: Date,
+    default: Date.now,
+  },
+});
 
-const Note = mongoose.model("Note", noteSchema);
-export default Note;
+const userSchema = new mongoose.Schema({
+  name: {
+    type: String,
+    required: true,
+  },
+  email: {
+    type: String,
+    required: true,
+    unique: true,
+  },
+  password: {
+    type: String,
+    required: true,
+  },
+  college: {
+    type: String,
+    required: true,
+  },
+  marks: [marksSchema],
+  profilePicture: {
+    type: String,
+    default: "",
+  },
+  bio: {
+    type: String,
+    default: "",
+  },
+}, { timestamps: true });
+
+// Check if the model already exists to prevent OverwriteModelError
+const User = mongoose.models.User || mongoose.model("User", userSchema);
+export default User;

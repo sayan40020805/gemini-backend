@@ -1,46 +1,47 @@
 import Progress from "../models/Progress.js";
 
-// POST /api/progress/mark
-export const markProgress = async (req, res) => {
+// POST /api/progress/update
+export const updateProgress = async (req, res) => {
   try {
-    const { userId, videoId } = req.body;
+    const { userId, courseId, completedLessons, totalLessons, score } = req.body;
 
-    if (!userId || !videoId) {
-      return res.status(400).json({ error: "Missing userId or videoId" });
+    if (!userId || !courseId || completedLessons === undefined || totalLessons === undefined) {
+      return res.status(400).json({ error: "Missing required fields" });
     }
 
-    let progress = await Progress.findOne({ userId });
+    let progress = await Progress.findOne({ userId, courseId });
 
-    if (!progress) {
+    if (progress) {
+      progress.completedLessons = completedLessons;
+      progress.totalLessons = totalLessons;
+      progress.score = score || progress.score;
+      progress.updatedAt = new Date();
+    } else {
       progress = new Progress({
         userId,
-        watchedVideos: [videoId],
+        courseId,
+        completedLessons,
+        totalLessons,
+        score: score || 0,
       });
-    } else if (!progress.watchedVideos.includes(videoId)) {
-      progress.watchedVideos.push(videoId);
     }
 
     await progress.save();
-    res.status(200).json({ message: "Progress updated", progress });
+    res.status(200).json({ message: "Progress updated successfully", progress });
   } catch (err) {
-    console.error("Progress update error:", err.message);
+    console.error("Update progress error:", err.message);
     res.status(500).json({ error: "Failed to update progress" });
   }
 };
 
 // GET /api/progress/:userId
-export const getProgress = async (req, res) => {
+export const getUserProgress = async (req, res) => {
   try {
     const { userId } = req.params;
-    const progress = await Progress.findOne({ userId });
-
-    if (!progress) {
-      return res.status(404).json({ message: "No progress found" });
-    }
-
+    const progress = await Progress.find({ userId }).populate("courseId");
     res.status(200).json(progress);
   } catch (err) {
-    console.error("Fetch progress error:", err.message);
+    console.error("Get user progress error:", err.message);
     res.status(500).json({ error: "Failed to fetch progress" });
   }
 };

@@ -1,15 +1,24 @@
 import express from "express";
 import {
-  registerUser,
-  loginUser,
+  register,
+  login,
+  logout,
   getProfile,
+  updateProfile,
+  addMarks,
+  deleteMarks,
 } from "../controllers/authController.js";
-import { protect } from "../middleware/authMiddleware.js";
+import { protect } from "../middlewares/authMiddleware.js";
 
 const router = express.Router();
 
-router.post("/register", registerUser);
-router.post("/login", loginUser);
+// Public routes
+router.post("/register", register);
+router.post("/signup", register); // Add signup endpoint that maps to register
+router.post("/login", login);
 router.get("/profile", protect, getProfile);
+router.put("/profile", protect, updateProfile);
+router.post("/marks", protect, addMarks);
+router.delete("/marks/:markId", protect, deleteMarks);
 
 export default router;

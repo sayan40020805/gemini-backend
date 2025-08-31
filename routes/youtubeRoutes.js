@@ -7,7 +7,7 @@ dotenv.config();
 
 const router = express.Router();
 const YOUTUBE_API_KEY = process.env.YOUTUBE_API_KEY;
-const MAX_RESULTS = 8;
+const MAX_RESULTS = 10;
 
 // Route to fetch YouTube videos
 router.get("/videos", async (req, res) => {
