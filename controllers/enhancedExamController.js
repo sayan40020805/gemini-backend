@@ -19,13 +19,6 @@ export const generateExam = async (req, res) => {
 
     const { subject, questionCount, difficulty = "medium" } = req.body;
 
-    if (!process.env.GEMINI_API_KEY) {
-      return res.status(500).json({
-        success: false,
-        error: "GEMINI_API_KEY is not configured. Please check your environment variables."
-      });
-    }
-
     if (!subject || !questionCount) {
       return res.status(400).json({
         success: false,
