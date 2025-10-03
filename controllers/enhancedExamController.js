@@ -1,7 +1,7 @@
 import EnhancedExam from "../models/EnhancedExam.js";
 import EnhancedSubmission from "../models/EnhancedSubmission.js";
 import User from "../models/User.js";
-import { GoogleGenAI } from "@google/generative-ai";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 
 // 🚨 Removed SUBJECTS constant because we allow free input
 
@@ -56,8 +56,10 @@ export const generateExam = async (req, res) => {
     }`;
 
     // Initialize Gemini AI client within the request handler
-    const genAI = new GoogleGenAI(apiKey);
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    const genAI = new GoogleGenerativeAI(apiKey);
+    // List available models to find a valid model name
+    // Temporarily use a fallback model name or update after listing models
+    const model = genAI.getGenerativeModel({ model: "text-bison-001" });
 
     const result = await model.generateContent(prompt);
     const response = await result.response;
@@ -66,7 +68,12 @@ export const generateExam = async (req, res) => {
     // Parse Gemini response
     let examData;
     try {
-      const cleanedText = text.trim();
+      let cleanedText = text.trim();
+
+      // Remove markdown code block markers if present
+      cleanedText = cleanedText.replace(/^```json\s*/, '').replace(/\s*```$/, '');
+
+      // Find the JSON object
       const jsonMatch = cleanedText.match(/\{[\s\S]*\}/);
       if (!jsonMatch) {
         throw new Error("Invalid response format from Gemini");
