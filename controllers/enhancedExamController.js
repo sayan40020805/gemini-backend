@@ -56,10 +56,8 @@ export const generateExam = async (req, res) => {
     }`;
 
     // Initialize Gemini AI client within the request handler
-    const genAI = new GoogleGenerativeAI(apiKey);
-    // List available models to find a valid model name
-    // Temporarily use a fallback model name or update after listing models
-    const model = genAI.getGenerativeModel({ model: "text-bison-001" });
+    const genAI = new GoogleGenerativeAI({ apiKey: apiKey });
+    const model = genAI.model("text-bison-001");
 
     const result = await model.generateContent(prompt);
     const response = await result.response;

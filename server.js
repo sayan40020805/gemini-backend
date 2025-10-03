@@ -18,7 +18,10 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 
 // Middleware
-app.use(cors());
+app.use(cors({
+  origin: ['http://127.0.0.1:5176', 'http://localhost:5176', 'https://your-frontend-domain.com'], // Add your frontend URLs
+  credentials: true
+}));
 app.use(express.json());
 
 // Serve static files from uploads directory
