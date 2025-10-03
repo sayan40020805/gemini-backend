@@ -52,9 +52,13 @@ export const generateExam = async (req, res) => {
     const genAI = new GoogleGenerativeAI({ apiKey: apiKey });
     const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
+    console.log("Sending prompt to Gemini:", prompt);
+
     const result = await model.generateContent(prompt);
     const response = await result.response;
     const text = response.text();
+
+    console.log("Gemini raw response:", text);
 
     // Parse Gemini response
     let examData;
@@ -63,14 +67,28 @@ export const generateExam = async (req, res) => {
 
       // Remove markdown code block markers if present
       cleanedText = cleanedText.replace(/^```json\s*/, '').replace(/\s*```$/, '');
+      cleanedText = cleanedText.replace(/^```\s*/, '').replace(/\s*```$/, '');
 
-      // Find the JSON object
-      const jsonMatch = cleanedText.match(/\{[\s\S]*\}/);
+      console.log("Cleaned text:", cleanedText);
+
+      // Try to find JSON object with regex
+      let jsonMatch = cleanedText.match(/\{[\s\S]*\}/);
       if (!jsonMatch) {
-        throw new Error("Invalid response format from Gemini");
+        // Try alternative: look for content between first { and last }
+        const startIndex = cleanedText.indexOf('{');
+        const endIndex = cleanedText.lastIndexOf('}');
+        if (startIndex !== -1 && endIndex !== -1 && endIndex > startIndex) {
+          const jsonString = cleanedText.substring(startIndex, endIndex + 1);
+          console.log("Alternative JSON extraction:", jsonString);
+          examData = JSON.parse(jsonString);
+        } else {
+          console.error("No JSON object found in response");
+          throw new Error("Invalid response format from Gemini");
+        }
+      } else {
+        console.log("JSON match:", jsonMatch[0]);
+        examData = JSON.parse(jsonMatch[0]);
       }
-
-      examData = JSON.parse(jsonMatch[0]);
 
       if (!examData.questions || !Array.isArray(examData.questions)) {
         throw new Error("Invalid questions format");
@@ -90,9 +108,10 @@ export const generateExam = async (req, res) => {
       });
     } catch (parseError) {
       console.error("JSON parsing error:", parseError);
+      console.error("Raw Gemini response:", text);
       return res.status(500).json({
         success: false,
-        error: `Failed to parse exam data: ${parseError.message}`
+        error: `Failed to parse exam data: ${parseError.message}. Raw response: ${text.substring(0, 500)}...`
       });
     }
 
