@@ -5,24 +5,16 @@ import CertificateCourse from '../models/CertificateCourse.js';
 import Exam from '../models/Exam.js';
 
 dotenv.config();
-import 'dotenv/config'; // Correct way to import for side-effects in ESM
 
 const seedData = async () => {
-  let connection;
   try {
     await mongoose.connect(process.env.MONGO_URI);
-    connection = await mongoose.connect(process.env.MONGO_URI);
     console.log('Connected to MongoDB');
 
     // Clear existing data
     await EnhancedCourse.deleteMany({});
     await CertificateCourse.deleteMany({});
     await Exam.deleteMany({});
-    await Promise.all([
-      EnhancedCourse.deleteMany({}),
-      CertificateCourse.deleteMany({}),
-      Exam.deleteMany({})
-    ]);
     console.log('Cleared existing data');
 
     // Create Certificate Courses
@@ -338,12 +330,6 @@ const seedData = async () => {
   } catch (error) {
     console.error('Error seeding data:', error);
     mongoose.connection.close();
-    process.exit(1); // Exit with an error code
-  } finally {
-    if (connection) {
-      await connection.disconnect();
-      console.log('Disconnected from MongoDB');
-    }
   }
 };
 

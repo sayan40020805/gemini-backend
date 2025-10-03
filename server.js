@@ -1,6 +1,6 @@
+import "dotenv/config"; // Load environment variables first!
 import express from "express";
 import cors from "cors";
-import dotenv from "dotenv";
 import mongoose from "mongoose";
 
 // Routes
@@ -13,9 +13,6 @@ import examRoutes from "./routes/examRoutes.js";
 import enhancedExamRoutes from "./routes/enhancedExamRoutes.js";
 import notesRoutes from "./routes/notesRoutes.js";
 import progressRoutes from "./routes/progressRoutes.js";
-
-// Load environment variables
-dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 5000;

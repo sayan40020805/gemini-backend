@@ -3,22 +3,20 @@ import EnhancedSubmission from "../models/EnhancedSubmission.js";
 import User from "../models/User.js";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
-// Check if GEMINI_API_KEY is available
-let genAI;
-let model;
-
-if (process.env.GEMINI_API_KEY) {
-  genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-  model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-} else {
-  console.warn("⚠️  GEMINI_API_KEY is not configured. Enhanced exam generation will be disabled.");
-}
-
 // 🚨 Removed SUBJECTS constant because we allow free input
 
 // POST /api/enhanced-exams/generate
 export const generateExam = async (req, res) => {
   try {
+    const apiKey = process.env.GEMINI_API_KEY;
+    if (!apiKey) {
+      console.error("GEMINI_API_KEY is not configured.");
+      return res.status(500).json({
+        success: false,
+        error: "The API key for the AI service is not configured on the server."
+      });
+    }
+
     const { subject, questionCount, difficulty = "medium" } = req.body;
 
     if (!process.env.GEMINI_API_KEY) {
@@ -56,6 +54,10 @@ export const generateExam = async (req, res) => {
         }
       ]
     }`;
+
+    // Initialize Gemini AI client within the request handler
+    const genAI = new GoogleGenerativeAI(apiKey);
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
     const result = await model.generateContent(prompt);
     const response = await result.response;
