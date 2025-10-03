@@ -57,7 +57,7 @@ export const generateExam = async (req, res) => {
 
     // Initialize Gemini AI client within the request handler
     const genAI = new GoogleGenerativeAI({ apiKey: apiKey });
-    const model = genAI.model("text-bison-001");
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
     const result = await model.generateContent(prompt);
     const response = await result.response;
