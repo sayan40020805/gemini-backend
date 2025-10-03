@@ -24,6 +24,9 @@ const PORT = process.env.PORT || 5000;
 app.use(cors());
 app.use(express.json());
 
+// Serve static files from uploads directory
+app.use('/uploads', express.static('uploads'));
+
 // Connect to MongoDB
 const connectDB = async () => {
   try {

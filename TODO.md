@@ -1,13 +1,18 @@
-# Exam History Dashboard Implementation
+# TODO: Add PDF Upload to Notes System
 
-## Tasks
-- [x] Modify `submitExam` in examController.js to automatically add exam results to user's marks array
-- [x] Modify `submitAndScoreExam` in enhancedExamController.js to automatically add scored results to user's marks array
-- [x] Create `getUserDashboard` function in authController.js that aggregates both exam histories
-- [x] Add `/dashboard` route in authRoutes.js
-- [ ] Test automatic mark addition after exam submission
-- [ ] Verify dashboard shows combined exam history
+## Completed
+- [x] Revert Gemini file upload changes
+- [x] Update Note model to include userId and fileName
+- [x] Update notesController.js to handle PDF uploads
+- [x] Add authentication middleware to notes routes
+- [x] Configure Multer for PDF file uploads
+- [x] Create uploads/notes and uploads/temp directories
+- [x] Add static file serving for uploads directory
+- [x] Implement PDF validation (type and size limits)
+- [x] Update getNotes to filter by user and subject
+- [x] Start server and verify it's running
 
-## Progress
-- [x] Plan approved by user
-- [x] TODO.md created
+## Pending
+- [ ] Test PDF upload functionality
+- [ ] Update frontend to upload PDFs to notes
+- [ ] Add organizer section functionality

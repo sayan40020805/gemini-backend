@@ -2,6 +2,11 @@ import mongoose from "mongoose";
 
 const noteSchema = new mongoose.Schema(
   {
+    userId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      required: true,
+    },
     subject: {
       type: String,
       required: true,
@@ -19,6 +24,10 @@ const noteSchema = new mongoose.Schema(
       required: true,
     },
     noteLink: {
+      type: String,
+      required: true,
+    },
+    fileName: {
       type: String,
       required: true,
     },
