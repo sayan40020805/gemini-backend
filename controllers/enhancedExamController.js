@@ -1,7 +1,7 @@
 import EnhancedExam from "../models/EnhancedExam.js";
 import EnhancedSubmission from "../models/EnhancedSubmission.js";
 import User from "../models/User.js";
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import { GoogleGenAI } from "@google/generative-ai";
 
 // 🚨 Removed SUBJECTS constant because we allow free input
 
@@ -56,7 +56,7 @@ export const generateExam = async (req, res) => {
     }`;
 
     // Initialize Gemini AI client within the request handler
-    const genAI = new GoogleGenerativeAI(apiKey);
+    const genAI = new GoogleGenAI(apiKey);
     const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
     const result = await model.generateContent(prompt);
