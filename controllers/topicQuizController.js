@@ -1,4 +1,4 @@
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import OpenAI from "openai";
 
 const generateTopicQuiz = async (req, res) => {
   try {
@@ -8,25 +8,27 @@ const generateTopicQuiz = async (req, res) => {
       return res.status(400).json({ error: 'Topic and question count are required' });
     }
 
-    const apiKey = process.env.GEMINI_API_KEY;
+    const apiKey = process.env.DEEPSEEK_API_KEY;
     if (!apiKey) {
-      console.error("GEMINI_API_KEY is not configured.");
+      console.error("DEEPSEEK_API_KEY is not configured.");
       return res.status(500).json({
         success: false,
         error: "The API key for the AI service is not configured on the server."
       });
     }
 
-    const model = new GoogleGenerativeAI({ apiKey });
-    const genModel = model.getGenerativeModel({ model: "gemini-pro" });
+    const client = new OpenAI({
+      apiKey: apiKey,
+      baseURL: "https://api.deepseek.com",
+    });
 
-    const prompt = `Generate ${questionCount} multiple choice questions about ${topic}. 
+    const prompt = `Generate ${questionCount} multiple choice questions about ${topic}.
     Each question should have:
     - A clear question
     - 4 options (A, B, C, D)
     - The correct answer (0-3)
     - A brief explanation
-    
+
     Format as valid JSON array:
     [{
       "question": "question text",
@@ -34,12 +36,20 @@ const generateTopicQuiz = async (req, res) => {
       "correctAnswer": 0,
       "explanation": "explanation text"
     }]
-    
+
     Make questions appropriate for learning and understanding.`;
 
-    const result = await genModel.generateContent(prompt);
-    const response = await result.response;
-    const text = response.text();
+    const completion = await client.chat.completions.create({
+      model: "deepseek-chat",
+      messages: [
+        {
+          role: "user",
+          content: prompt,
+        },
+      ],
+    });
+
+    const text = completion.choices[0]?.message?.content;
 
     // Parse the JSON response
     let questions;
