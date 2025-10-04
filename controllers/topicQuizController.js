@@ -1,3 +1,5 @@
+import { GoogleGenerativeAI } from "@google/generative-ai";
+
 const generateTopicQuiz = async (req, res) => {
   try {
     const { topic, questionCount } = req.body;
@@ -6,8 +8,52 @@ const generateTopicQuiz = async (req, res) => {
       return res.status(400).json({ error: 'Topic and question count are required' });
     }
 
-    // Since quiz generation is moved to frontend, use fallback sample questions
-    const questions = generateSampleQuestions(topic, questionCount);
+    const apiKey = process.env.GEMINI_API_KEY;
+    if (!apiKey) {
+      console.error("GEMINI_API_KEY is not configured.");
+      return res.status(500).json({
+        success: false,
+        error: "The API key for the AI service is not configured on the server."
+      });
+    }
+
+    const model = new GoogleGenerativeAI({ apiKey });
+    const genModel = model.getGenerativeModel({ model: "gemini-pro" });
+
+    const prompt = `Generate ${questionCount} multiple choice questions about ${topic}. 
+    Each question should have:
+    - A clear question
+    - 4 options (A, B, C, D)
+    - The correct answer (0-3)
+    - A brief explanation
+    
+    Format as valid JSON array:
+    [{
+      "question": "question text",
+      "options": ["option1", "option2", "option3", "option4"],
+      "correctAnswer": 0,
+      "explanation": "explanation text"
+    }]
+    
+    Make questions appropriate for learning and understanding.`;
+
+    const result = await genModel.generateContent(prompt);
+    const response = await result.response;
+    const text = response.text();
+
+    // Parse the JSON response
+    let questions;
+    try {
+      const jsonMatch = text.match(/\[[\s\S]*\]/);
+      if (jsonMatch) {
+        questions = JSON.parse(jsonMatch[0]);
+      } else {
+        questions = JSON.parse(text);
+      }
+    } catch (parseError) {
+      // Fallback: create sample questions if parsing fails
+      questions = generateSampleQuestions(topic, questionCount);
+    }
 
     // Calculate timing (2 minutes per question)
     const timePerQuestion = 2; // minutes

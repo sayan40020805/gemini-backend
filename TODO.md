@@ -1,16 +1,17 @@
-# Backend Cleanup - Remove Unnecessary Gemini Code
+# Restore Gemini API Proxy - Fix CORS Issues
 
-## Files to Remove Completely
-- [x] `controllers/geminiController.js` - Entire Gemini controller no longer needed
-- [x] `routes/geminiRoutes.js` - Routes for Gemini API no longer needed
-- [x] `test-gemini.js` - Test file for Gemini functionality no longer needed
+## Files to Restore/Create
+- [ ] `controllers/geminiController.js` - Restore Gemini controller for chat API proxy
+- [ ] `routes/geminiRoutes.js` - Restore Gemini API routes
+- [ ] `test-gemini.js` - Restore Gemini test script
 
 ## Files to Modify
-- [x] `server.js` - Remove Gemini routes import and registration
-- [x] `package.json` - Remove Gemini-related dependencies (@google/genai, @google/generative-ai)
-- [x] `controllers/enhancedExamController.js` - Remove Gemini import and exam generation logic (keep data storage/scoring)
-- [x] `controllers/topicQuizController.js` - Remove Gemini import and generation logic (keep fallback sample questions)
+- [ ] `server.js` - Re-add Gemini routes import and registration
+- [ ] `package.json` - Re-add Gemini dependencies (@google/genai, @google/generative-ai)
+- [ ] `controllers/enhancedExamController.js` - Re-enable Gemini exam generation (proxied through backend)
+- [ ] `controllers/topicQuizController.js` - Re-enable Gemini quiz generation (proxied through backend)
 
 ## Verification
-- [x] Run tests to ensure backend still functions for data operations
-- [x] Check that no Gemini references remain in codebase
+- [ ] Install dependencies and test Gemini API proxy
+- [ ] Verify CORS issues are resolved
+- [ ] Confirm API key security (server-side only)
