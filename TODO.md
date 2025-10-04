@@ -40,6 +40,7 @@
 - Mock exam options are more descriptive
 
 ## Next Steps for User
-- Copy `src/utils/api.js` to your frontend project
-- Redeploy the backend to apply the new routes
+- Copy `src/utils/api.js` to your frontend project and update the import paths in your React components
+- Redeploy the backend to apply the new routes and CORS settings
 - Set a valid `DEEPSEEK_API_KEY` environment variable on your deployment platform to use real AI instead of mock responses
+- Update your frontend components to use the API utility instead of direct axios calls
