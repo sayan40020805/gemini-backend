@@ -1,18 +1,16 @@
-# TODO: Add PDF Upload to Notes System
+# Backend Cleanup - Remove Unnecessary Gemini Code
 
-## Completed
-- [x] Revert Gemini file upload changes
-- [x] Update Note model to include userId and fileName
-- [x] Update notesController.js to handle PDF uploads
-- [x] Add authentication middleware to notes routes
-- [x] Configure Multer for PDF file uploads
-- [x] Create uploads/notes and uploads/temp directories
-- [x] Add static file serving for uploads directory
-- [x] Implement PDF validation (type and size limits)
-- [x] Update getNotes to filter by user and subject
-- [x] Start server and verify it's running
+## Files to Remove Completely
+- [x] `controllers/geminiController.js` - Entire Gemini controller no longer needed
+- [x] `routes/geminiRoutes.js` - Routes for Gemini API no longer needed
+- [x] `test-gemini.js` - Test file for Gemini functionality no longer needed
 
-## Pending
-- [ ] Test PDF upload functionality
-- [ ] Update frontend to upload PDFs to notes
-- [ ] Add organizer section functionality
+## Files to Modify
+- [x] `server.js` - Remove Gemini routes import and registration
+- [x] `package.json` - Remove Gemini-related dependencies (@google/genai, @google/generative-ai)
+- [x] `controllers/enhancedExamController.js` - Remove Gemini import and exam generation logic (keep data storage/scoring)
+- [x] `controllers/topicQuizController.js` - Remove Gemini import and generation logic (keep fallback sample questions)
+
+## Verification
+- [x] Run tests to ensure backend still functions for data operations
+- [x] Check that no Gemini references remain in codebase

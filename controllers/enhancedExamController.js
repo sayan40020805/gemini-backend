@@ -1,22 +1,9 @@
 import EnhancedExam from "../models/EnhancedExam.js";
 import EnhancedSubmission from "../models/EnhancedSubmission.js";
 import User from "../models/User.js";
-import { GoogleGenerativeAI } from "@google/generative-ai";
-
-// 🚨 Removed SUBJECTS constant because we allow free input
-
 // POST /api/enhanced-exams/generate
 export const generateExam = async (req, res) => {
   try {
-    const apiKey = process.env.GEMINI_API_KEY;
-    if (!apiKey) {
-      console.error("GEMINI_API_KEY is not configured.");
-      return res.status(500).json({
-        success: false,
-        error: "The API key for the AI service is not configured on the server."
-      });
-    }
-
     const { subject, questionCount, difficulty = "medium" } = req.body;
 
     if (!subject || !questionCount) {
@@ -33,110 +20,10 @@ export const generateExam = async (req, res) => {
       });
     }
 
-    // ✅ Instead of validating against SUBJECTS, just use the raw subject
-    const prompt = `Generate ${questionCount} multiple choice questions for the subject "${subject}" at ${difficulty} difficulty level.
-    Each question should have 4 options (A, B, C, D) with one correct answer.
-    Return the response in JSON format with this structure:
-    {
-      "questions": [
-        {
-          "question": "question text",
-          "options": ["option1", "option2", "option3", "option4"],
-          "correctAnswer": "A",
-          "explanation": "brief explanation"
-        }
-      ]
-    }`;
-
-    // Initialize Gemini AI client within the request handler
-    const genAI = new GoogleGenerativeAI({ apiKey: apiKey });
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-
-    console.log("Sending prompt to Gemini:", prompt);
-
-    const result = await model.generateContent(prompt);
-    const response = await result.response;
-    const text = response.text();
-
-    console.log("Gemini raw response:", text);
-
-    // Parse Gemini response
-    let examData;
-    try {
-      let cleanedText = text.trim();
-
-      // Remove markdown code block markers if present
-      cleanedText = cleanedText.replace(/^```json\s*/, '').replace(/\s*```$/, '');
-      cleanedText = cleanedText.replace(/^```\s*/, '').replace(/\s*```$/, '');
-
-      console.log("Cleaned text:", cleanedText);
-
-      // Try to find JSON object with regex
-      let jsonMatch = cleanedText.match(/\{[\s\S]*\}/);
-      if (!jsonMatch) {
-        // Try alternative: look for content between first { and last }
-        const startIndex = cleanedText.indexOf('{');
-        const endIndex = cleanedText.lastIndexOf('}');
-        if (startIndex !== -1 && endIndex !== -1 && endIndex > startIndex) {
-          const jsonString = cleanedText.substring(startIndex, endIndex + 1);
-          console.log("Alternative JSON extraction:", jsonString);
-          examData = JSON.parse(jsonString);
-        } else {
-          console.error("No JSON object found in response");
-          throw new Error("Invalid response format from Gemini");
-        }
-      } else {
-        console.log("JSON match:", jsonMatch[0]);
-        examData = JSON.parse(jsonMatch[0]);
-      }
-
-      if (!examData.questions || !Array.isArray(examData.questions)) {
-        throw new Error("Invalid questions format");
-      }
-
-      const validAnswers = ['A', 'B', 'C', 'D'];
-      examData.questions.forEach((q, index) => {
-        if (!q.question || !q.options || !q.correctAnswer || !q.explanation) {
-          throw new Error(`Question ${index + 1} is missing required fields`);
-        }
-        if (!validAnswers.includes(q.correctAnswer)) {
-          throw new Error(`Question ${index + 1} has invalid correctAnswer: ${q.correctAnswer}`);
-        }
-        if (q.options.length !== 4) {
-          throw new Error(`Question ${index + 1} must have exactly 4 options`);
-        }
-      });
-    } catch (parseError) {
-      console.error("JSON parsing error:", parseError);
-      console.error("Raw Gemini response:", text);
-      return res.status(500).json({
-        success: false,
-        error: `Failed to parse exam data: ${parseError.message}. Raw response: ${text.substring(0, 500)}...`
-      });
-    }
-
-    // Save exam
-    const exam = new EnhancedExam({
-      title: `${subject} Exam - ${questionCount} Questions`,
-      subject: subject,
-      questionCount: questionCount,
-      difficulty: difficulty,
-      questions: examData.questions,
-      isGenerated: true
-    });
-
-    await exam.save();
-
-    res.status(201).json({
-      success: true,
-      message: "Exam generated successfully",
-      exam: {
-        id: exam._id,
-        title: exam.title,
-        questions: exam.questions,
-        subject: exam.subject,
-        questionCount: exam.questionCount
-      }
+    // Since exam generation is moved to frontend, just return an error or placeholder
+    return res.status(400).json({
+      success: false,
+      error: "Exam generation is now handled on the frontend. This endpoint is disabled."
     });
   } catch (err) {
     console.error("Generate exam error:", err.message);
