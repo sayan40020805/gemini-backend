@@ -148,19 +148,19 @@ export const generateExam = async (req, res) => {
     const mockQuestions = [
       {
         question: "What is the basic concept of " + subject + "?",
-        options: ["Definition A", "Definition B", "Definition C", "Definition D"],
+        options: ["The fundamental principle", "An advanced technique", "A historical event", "A specific example"],
         correctAnswer: "A",
         explanation: "This is the fundamental concept of " + subject + "."
       },
       {
         question: "Which of the following is most important in " + subject + "?",
-        options: ["Concept A", "Concept B", "Concept C", "Concept D"],
+        options: ["Core theory", "Practical application", "Historical context", "Future developments"],
         correctAnswer: "B",
         explanation: "This concept is crucial for understanding " + subject + "."
       },
       {
         question: "How does " + subject + " work in practice?",
-        options: ["Method A", "Method B", "Method C", "Method D"],
+        options: ["Through complex algorithms", "Via systematic processes", "Using traditional methods", "With modern technology"],
         correctAnswer: "C",
         explanation: "This method demonstrates practical application of " + subject + "."
       }
