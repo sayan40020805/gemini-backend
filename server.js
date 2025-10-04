@@ -5,6 +5,7 @@ import mongoose from "mongoose";
 
 // Routes
 import geminiRoutes from "./routes/geminiRoutes.js";
+import deepseekRoutes from "./routes/deepseekRoutes.js";
 import youtubeRoutes from "./routes/youtubeRoutes.js";
 import enhancedCourseRoutes from "./routes/enhancedCourseRoutes.js";
 import authRoutes from "./routes/authRoutes.js";
@@ -42,6 +43,7 @@ connectDB(); // Call the DB connection function
 
 // Route Handlers
 app.use("/api/gemini", geminiRoutes);
+app.use("/api/deepseek", deepseekRoutes);
 app.use("/api/youtube", youtubeRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/courses", courseRoutes);

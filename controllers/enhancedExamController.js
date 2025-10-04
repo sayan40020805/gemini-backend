@@ -5,45 +5,41 @@ import OpenAI from "openai";
 
 // POST /api/enhanced-exams/generate
 export const generateExam = async (req, res) => {
+  const { subject, questionCount, difficulty = "medium" } = req.body;
+
+  if (!subject || !questionCount) {
+    return res.status(400).json({
+      success: false,
+      error: "Subject and question count are required"
+    });
+  }
+
+  if (questionCount < 1 || questionCount > 50) {
+    return res.status(400).json({
+      success: false,
+      error: "Question count must be between 1 and 50"
+    });
+  }
+
   try {
     const apiKey = process.env.DEEPSEEK_API_KEY;
     if (!apiKey) {
-      console.error("DEEPSEEK_API_KEY is not configured.");
-      return res.status(500).json({
-        success: false,
-        error: "The API key for the AI service is not configured on the server."
-      });
+      throw new Error("API key not configured");
     }
 
-    const { subject, questionCount, difficulty = "medium" } = req.body;
-
-    if (!subject || !questionCount) {
-      return res.status(400).json({
-        success: false,
-        error: "Subject and question count are required"
-      });
-    }
-
-    if (questionCount < 1 || questionCount > 50) {
-      return res.status(400).json({
-        success: false,
-        error: "Question count must be between 1 and 50"
-      });
-    }
-
-    const prompt = `Generate ${questionCount} multiple choice questions for the subject "${subject}" at ${difficulty} difficulty level.
-    Each question should have 4 options (A, B, C, D) with one correct answer.
-    Return the response in JSON format with this structure:
-    {
-      "questions": [
-        {
-          "question": "question text",
-          "options": ["option1", "option2", "option3", "option4"],
-          "correctAnswer": "A",
-          "explanation": "brief explanation"
-        }
-      ]
-    }`;
+    const prompt = "Generate " + questionCount + " multiple choice questions for the subject \"" + subject + "\" at " + difficulty + " difficulty level.\n" +
+      "Each question should have 4 options (A, B, C, D) with one correct answer.\n" +
+      "Return the response in JSON format with this structure:\n" +
+      "{\n" +
+      "  \"questions\": [\n" +
+      "    {\n" +
+      "      \"question\": \"question text\",\n" +
+      "      \"options\": [\"option1\", \"option2\", \"option3\", \"option4\"],\n" +
+      "      \"correctAnswer\": \"A\",\n" +
+      "      \"explanation\": \"brief explanation\"\n" +
+      "    }\n" +
+      "  ]\n" +
+      "}";
 
     const client = new OpenAI({
       apiKey: apiKey,
@@ -103,13 +99,13 @@ export const generateExam = async (req, res) => {
       const validAnswers = ['A', 'B', 'C', 'D'];
       examData.questions.forEach((q, index) => {
         if (!q.question || !q.options || !q.correctAnswer || !q.explanation) {
-          throw new Error(`Question ${index + 1} is missing required fields`);
+          throw new Error("Question " + (index + 1) + " is missing required fields");
         }
         if (!validAnswers.includes(q.correctAnswer)) {
-          throw new Error(`Question ${index + 1} has invalid correctAnswer: ${q.correctAnswer}`);
+          throw new Error("Question " + (index + 1) + " has invalid correctAnswer: " + q.correctAnswer);
         }
         if (q.options.length !== 4) {
-          throw new Error(`Question ${index + 1} must have exactly 4 options`);
+          throw new Error("Question " + (index + 1) + " must have exactly 4 options");
         }
       });
     } catch (parseError) {
@@ -117,13 +113,13 @@ export const generateExam = async (req, res) => {
       console.error("Raw Gemini response:", text);
       return res.status(500).json({
         success: false,
-        error: `Failed to parse exam data: ${parseError.message}. Raw response: ${text.substring(0, 500)}...`
+        error: "Failed to parse exam data: " + parseError.message + ". Raw response: " + text.substring(0, 500) + "..."
       });
     }
 
     // Save exam
     const exam = new EnhancedExam({
-      title: `${subject} Exam - ${questionCount} Questions`,
+      title: subject + " Exam - " + questionCount + " Questions",
       subject: subject,
       questionCount: questionCount,
       difficulty: difficulty,
@@ -144,79 +140,61 @@ export const generateExam = async (req, res) => {
         questionCount: exam.questionCount
       }
     });
-    } catch (err) {
-      console.error("Generate exam error:", err.message);
-      // Fallback to mock exam generation when API fails
-      console.log("🔄 Falling back to mock exam generation due to API error");
+  } catch (err) {
+    console.error("Generate exam error:", err.message);
+    // Fallback to mock exam generation when API fails or API key missing
+    console.log("🔄 Falling back to mock exam generation due to API error");
 
-      const mockQuestions = [
-        {
-          question: `What is the basic concept of ${subject}?`,
-          options: ["Definition A", "Definition B", "Definition C", "Definition D"],
-          correctAnswer: "A",
-          explanation: `This is the fundamental concept of ${subject}.`
-        },
-        {
-          question: `Which of the following is most important in ${subject}?`,
-          options: ["Concept A", "Concept B", "Concept C", "Concept D"],
-          correctAnswer: "B",
-          explanation: `This concept is crucial for understanding ${subject}.`
-        },
-        {
-          question: `How does ${subject} work in practice?`,
-          options: ["Method A", "Method B", "Method C", "Method D"],
-          correctAnswer: "C",
-          explanation: `This method demonstrates practical application of ${subject}.`
-        }
-      ];
-
-      // Generate requested number of questions (repeat if needed)
-      const questions = [];
-      for (let i = 0; i < questionCount; i++) {
-        questions.push(mockQuestions[i % mockQuestions.length]);
+    const mockQuestions = [
+      {
+        question: "What is the basic concept of " + subject + "?",
+        options: ["Definition A", "Definition B", "Definition C", "Definition D"],
+        correctAnswer: "A",
+        explanation: "This is the fundamental concept of " + subject + "."
+      },
+      {
+        question: "Which of the following is most important in " + subject + "?",
+        options: ["Concept A", "Concept B", "Concept C", "Concept D"],
+        correctAnswer: "B",
+        explanation: "This concept is crucial for understanding " + subject + "."
+      },
+      {
+        question: "How does " + subject + " work in practice?",
+        options: ["Method A", "Method B", "Method C", "Method D"],
+        correctAnswer: "C",
+        explanation: "This method demonstrates practical application of " + subject + "."
       }
+    ];
 
-      const exam = new EnhancedExam({
-        title: `${subject} Exam - ${questionCount} Questions (Mock)`,
-        subject: subject,
-        questionCount: questionCount,
-        difficulty: difficulty,
-        questions: questions,
-        isGenerated: true
-      });
-
-      await exam.save();
-
-      res.status(201).json({
-        success: true,
-        message: "Exam generated successfully (using mock data)",
-        exam: {
-          id: exam._id,
-          title: exam.title,
-          questions: exam.questions,
-          subject: exam.subject,
-          questionCount: exam.questionCount
-        }
-      });
+    // Generate requested number of questions (repeat if needed)
+    const questions = [];
+    for (let i = 0; i < questionCount; i++) {
+      questions.push(mockQuestions[i % mockQuestions.length]);
     }
-};
 
-// GET /api/enhanced-exams/subjects
-export const getAvailableSubjects = (req, res) => {
-  // Return a list of common subjects as suggestions
-  const subjects = [
-    "Mathematics",
-    "Physics",
-    "Chemistry",
-    "Biology",
-    "Computer Science",
-    "History",
-    "Geography",
-    "English",
-    "Economics",
-    "Political Science"
-  ];
-  res.status(200).json({ success: true, subjects });
+    const exam = new EnhancedExam({
+      title: subject + " Exam - " + questionCount + " Questions (Mock)",
+      subject: subject,
+      questionCount: questionCount,
+      difficulty: difficulty,
+      questions: questions,
+      isGenerated: true
+    });
+
+    await exam.save();
+
+    res.status(201).json({
+      success: true,
+      message: "Exam generated successfully (using mock data)",
+      exam: {
+        id: exam._id,
+        title: exam.title,
+        questions: exam.questions,
+        subject: exam.subject,
+        questionCount: exam.questionCount
+      }
+    });
+  }
 };
 
 // POST /api/enhanced-exams/submit-and-score
@@ -227,10 +205,11 @@ export const submitAndScoreExam = async (req, res) => {
     if (!userId || !examId || !answers) {
       return res.status(400).json({
         success: false,
-        error: "Missing required fields"
+        error: "userId, examId, and answers are required"
       });
     }
 
+    // Find the exam
     const exam = await EnhancedExam.findById(examId);
     if (!exam) {
       return res.status(404).json({
@@ -239,22 +218,19 @@ export const submitAndScoreExam = async (req, res) => {
       });
     }
 
-    // Score the exam
     let score = 0;
-    const results = [];
-
-    exam.questions.forEach((question) => {
+    const results = exam.questions.map((question, index) => {
       const userAnswerObj = answers.find(a => a.questionId === question._id.toString());
       const userAnswer = userAnswerObj ? userAnswerObj.answer : null;
       const isCorrect = userAnswer === question.correctAnswer;
       if (isCorrect) score++;
-      results.push({
+      return {
         question: question.question,
         userAnswer,
         correctAnswer: question.correctAnswer,
         isCorrect,
         explanation: question.explanation
-      });
+      };
     });
 
     const totalQuestions = exam.questions.length;
@@ -297,41 +273,7 @@ export const submitAndScoreExam = async (req, res) => {
     console.error("Submit and score exam error:", err.message);
     res.status(500).json({
       success: false,
-      error: `Failed to submit and score exam: ${err.message}`
-    });
-  }
-};
-
-// GET /api/enhanced-exams/user/:userId/history
-export const getUserExamHistory = async (req, res) => {
-  try {
-    const { userId } = req.params;
-
-    const submissions = await EnhancedSubmission.find({ userId })
-      .populate('examId', 'title subject difficulty')
-      .sort({ submittedAt: -1 });
-
-    const formattedSubmissions = submissions.map(sub => ({
-      examName: sub.examId?.title || 'Enhanced Exam',
-      subject: sub.examId?.subject || 'General',
-      difficulty: sub.examId?.difficulty || 'medium',
-      score: sub.score,
-      totalQuestions: sub.results.length,
-      percentage: sub.results.length > 0 ? (sub.score / sub.results.length) * 100 : 0,
-      date: sub.submittedAt,
-      type: 'enhanced',
-      results: sub.results
-    }));
-
-    res.status(200).json({
-      success: true,
-      submissions: formattedSubmissions
-    });
-  } catch (err) {
-    console.error("Get user enhanced exam history error:", err.message);
-    res.status(500).json({
-      success: false,
-      error: `Failed to fetch enhanced exam history: ${err.message}`
+      error: "Failed to submit and score exam: " + err.message
     });
   }
 };
