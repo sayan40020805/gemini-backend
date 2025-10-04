@@ -16,8 +16,8 @@ export const askGemini = async (req, res) => {
       process.env.DEEPSEEK_USE_MOCK === "true";
 
     if (useMock) {
-      // Return a deterministic mock response so tests can verify routing and payload handling
-      const mockText = `Hello from Deepseek (mock). I can generate text, answer questions, and help summarize content.`;
+      // Return a mock response based on the prompt
+      const mockText = `Mock response to "${prompt}": Hello! This is a simulated response from Deepseek AI. In a real scenario, I would provide a detailed answer to your question.`;
       return res.status(200).json({ message: mockText });
     }
 
@@ -54,7 +54,7 @@ export const askGemini = async (req, res) => {
       console.error("❌ Deepseek client error:", libErr);
       // Fallback to mock response when API fails
       console.log("🔄 Falling back to mock response due to API error");
-      const mockText = `Hello from Deepseek (mock). I can generate text, answer questions, and help summarize content.`;
+      const mockText = `Mock response to "${prompt}": Hello! This is a simulated response from Deepseek AI. In a real scenario, I would provide a detailed answer to your question.`;
       return res.status(200).json({ message: mockText });
     }
   } catch (error) {
