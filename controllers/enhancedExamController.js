@@ -144,13 +144,61 @@ export const generateExam = async (req, res) => {
         questionCount: exam.questionCount
       }
     });
-  } catch (err) {
-    console.error("Generate exam error:", err.message);
-    res.status(500).json({
-      success: false,
-      error: `Failed to generate exam: ${err.message}`
-    });
-  }
+    } catch (err) {
+      console.error("Generate exam error:", err.message);
+      // Fallback to mock exam generation when API fails
+      console.log("🔄 Falling back to mock exam generation due to API error");
+
+      const mockQuestions = [
+        {
+          question: `What is the basic concept of ${subject}?`,
+          options: ["Definition A", "Definition B", "Definition C", "Definition D"],
+          correctAnswer: "A",
+          explanation: `This is the fundamental concept of ${subject}.`
+        },
+        {
+          question: `Which of the following is most important in ${subject}?`,
+          options: ["Concept A", "Concept B", "Concept C", "Concept D"],
+          correctAnswer: "B",
+          explanation: `This concept is crucial for understanding ${subject}.`
+        },
+        {
+          question: `How does ${subject} work in practice?`,
+          options: ["Method A", "Method B", "Method C", "Method D"],
+          correctAnswer: "C",
+          explanation: `This method demonstrates practical application of ${subject}.`
+        }
+      ];
+
+      // Generate requested number of questions (repeat if needed)
+      const questions = [];
+      for (let i = 0; i < questionCount; i++) {
+        questions.push(mockQuestions[i % mockQuestions.length]);
+      }
+
+      const exam = new EnhancedExam({
+        title: `${subject} Exam - ${questionCount} Questions (Mock)`,
+        subject: subject,
+        questionCount: questionCount,
+        difficulty: difficulty,
+        questions: questions,
+        isGenerated: true
+      });
+
+      await exam.save();
+
+      res.status(201).json({
+        success: true,
+        message: "Exam generated successfully (using mock data)",
+        exam: {
+          id: exam._id,
+          title: exam.title,
+          questions: exam.questions,
+          subject: exam.subject,
+          questionCount: exam.questionCount
+        }
+      });
+    }
 };
 
 // GET /api/enhanced-exams/subjects

@@ -80,6 +80,7 @@ const generateTopicQuiz = async (req, res) => {
 
   } catch (error) {
     console.error('Error generating quiz:', error);
+    console.log("🔄 Using fallback sample questions due to API error");
     // Return sample questions as fallback
     const questions = generateSampleQuestions(req.body.topic, req.body.questionCount);
     res.json({
