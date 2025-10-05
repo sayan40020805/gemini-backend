@@ -1,7 +1,8 @@
 import express from "express";
 import {
   generateExam,
-  submitAndScoreExam
+  submitAndScoreExam,
+  getEnhancedExamHistory
 } from "../controllers/enhancedExamController.js";
 
 const router = express.Router();
@@ -9,6 +10,7 @@ const router = express.Router();
 // Enhanced exam routes with Gemini integration
 router.post("/generate", generateExam);
 router.post("/submit-and-score", submitAndScoreExam);
+router.get("/user/:userId/history", getEnhancedExamHistory);
 
 // GET /api/enhanced-exams/subjects
 router.get("/subjects", (req, res) => {

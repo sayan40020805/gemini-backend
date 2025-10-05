@@ -277,3 +277,48 @@ export const submitAndScoreExam = async (req, res) => {
     });
   }
 };
+
+// GET /api/enhanced-exams/user/:userId/history
+export const getEnhancedExamHistory = async (req, res) => {
+  try {
+    const { userId } = req.params;
+
+    if (!userId) {
+      return res.status(400).json({
+        success: false,
+        error: "User ID is required"
+      });
+    }
+
+    // Fetch enhanced exam submissions for the user
+    const submissions = await EnhancedSubmission.find({ userId })
+      .populate('examId', 'title subject questionCount difficulty')
+      .sort({ submittedAt: -1 });
+
+    // Format the submissions to match dashboard expectations
+    const formattedSubmissions = submissions.map(sub => ({
+      examName: sub.examId?.title || 'Enhanced Exam',
+      marks: sub.score || 0,
+      totalMarks: sub.examId?.questionCount || 0,
+      percentage: sub.examId?.questionCount ? ((sub.score / sub.examId.questionCount) * 100) : 0,
+      date: sub.submittedAt,
+      subject: sub.examId?.subject || 'General',
+      type: 'enhanced',
+      score: sub.score || 0,
+      correctAnswers: sub.score || 0,
+      totalQuestions: sub.examId?.questionCount || 0
+    }));
+
+    res.status(200).json({
+      success: true,
+      submissions: formattedSubmissions
+    });
+
+  } catch (err) {
+    console.error("Get enhanced exam history error:", err.message);
+    res.status(500).json({
+      success: false,
+      error: `Failed to fetch enhanced exam history: ${err.message}`
+    });
+  }
+};
