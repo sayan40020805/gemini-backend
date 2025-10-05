@@ -1,133 +1,70 @@
-import OpenAI from "openai";
+import TopicQuizResult from '../models/TopicQuizResult.js';
 
-const generateTopicQuiz = async (req, res) => {
+const saveTopicQuizResult = async (req, res) => {
   try {
-    const { topic, questionCount } = req.body;
+    const { userId, topic, difficulty, totalQuestions, correctAnswers, percentage, answers } = req.body;
 
-    if (!topic || !questionCount) {
-      return res.status(400).json({ error: 'Topic and question count are required' });
-    }
-
-    const apiKey = process.env.DEEPSEEK_API_KEY;
-    if (!apiKey) {
-      console.error("DEEPSEEK_API_KEY is not configured.");
-      return res.status(500).json({
+    if (!userId || !topic || !difficulty || totalQuestions === undefined || correctAnswers === undefined || percentage === undefined) {
+      return res.status(400).json({
         success: false,
-        error: "The API key for the AI service is not configured on the server."
+        error: 'Missing required fields: userId, topic, difficulty, totalQuestions, correctAnswers, percentage'
       });
     }
 
-    const client = new OpenAI({
-      apiKey: apiKey,
-      baseURL: "https://api.deepseek.com",
+    const newResult = new TopicQuizResult({
+      userId,
+      topic,
+      difficulty,
+      totalQuestions,
+      correctAnswers,
+      percentage,
+      answers: answers || []
     });
 
-    const prompt = `Generate ${questionCount} multiple choice questions about ${topic}.
-    Each question should have:
-    - A clear question
-    - 4 options (A, B, C, D)
-    - The correct answer (0-3)
-    - A brief explanation
-
-    Format as valid JSON array:
-    [{
-      "question": "question text",
-      "options": ["option1", "option2", "option3", "option4"],
-      "correctAnswer": 0,
-      "explanation": "explanation text"
-    }]
-
-    Make questions appropriate for learning and understanding.`;
-
-    const completion = await client.chat.completions.create({
-      model: "deepseek-chat",
-      messages: [
-        {
-          role: "user",
-          content: prompt,
-        },
-      ],
-    });
-
-    const text = completion.choices[0]?.message?.content;
-
-    // Parse the JSON response
-    let questions;
-    try {
-      const jsonMatch = text.match(/\[[\s\S]*\]/);
-      if (jsonMatch) {
-        questions = JSON.parse(jsonMatch[0]);
-      } else {
-        questions = JSON.parse(text);
-      }
-    } catch (parseError) {
-      // Fallback: create sample questions if parsing fails
-      questions = generateSampleQuestions(topic, questionCount);
-    }
-
-    // Calculate timing (2 minutes per question)
-    const timePerQuestion = 2; // minutes
-    const totalTime = questionCount * timePerQuestion;
+    await newResult.save();
 
     res.json({
       success: true,
-      topic,
-      questions,
-      totalQuestions: questionCount,
-      totalTime,
-      timePerQuestion
+      message: 'Quiz result saved successfully',
+      resultId: newResult._id
     });
 
   } catch (error) {
-    console.error('Error generating quiz:', error);
-    console.log("🔄 Using fallback sample questions due to API error");
-    // Return sample questions as fallback
-    const questions = generateSampleQuestions(req.body.topic, req.body.questionCount);
+    console.error('Error saving topic quiz result:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to save quiz result'
+    });
+  }
+};
+
+const getTopicQuizHistory = async (req, res) => {
+  try {
+    const { userId } = req.params;
+
+    if (!userId) {
+      return res.status(400).json({
+        success: false,
+        error: 'User ID is required'
+      });
+    }
+
+    const results = await TopicQuizResult.find({ userId })
+      .sort({ date: -1 })
+      .select('topic difficulty totalQuestions correctAnswers percentage date');
+
     res.json({
       success: true,
-      topic: req.body.topic,
-      questions,
-      totalQuestions: req.body.questionCount,
-      totalTime: req.body.questionCount * 2,
-      timePerQuestion: 2
+      results
+    });
+
+  } catch (error) {
+    console.error('Error fetching topic quiz history:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to fetch quiz history'
     });
   }
 };
 
-// Fallback function to generate sample questions
-function generateSampleQuestions(topic, count) {
-  const sampleQuestions = [
-    {
-      question: `What is the basic concept of ${topic}?`,
-      options: ["Definition A", "Definition B", "Definition C", "Definition D"],
-      correctAnswer: 0,
-      explanation: `This is the fundamental concept of ${topic}.`
-    },
-    {
-      question: `Which of the following is most important in ${topic}?`,
-      options: ["Concept A", "Concept B", "Concept C", "Concept D"],
-      correctAnswer: 1,
-      explanation: `This concept is crucial for understanding ${topic}.`
-    },
-    {
-      question: `How does ${topic} work in practice?`,
-      options: ["Method A", "Method B", "Method C", "Method D"],
-      correctAnswer: 2,
-      explanation: `This method demonstrates practical application of ${topic}.`
-    }
-  ];
-  
-  // Return requested number of questions
-  const questions = [];
-  for (let i = 0; i < count; i++) {
-    questions.push({
-      ...sampleQuestions[i % sampleQuestions.length],
-      question: sampleQuestions[i % sampleQuestions.length].question.replace(`${topic}`, topic)
-    });
-  }
-  return questions;
-}
-
-module.exports = {
-  generateTopicQuiz
-};
+export { saveTopicQuizResult, getTopicQuizHistory };

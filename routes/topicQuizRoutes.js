@@ -1,7 +1,8 @@
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const { generateTopicQuiz } = require('../controllers/topicQuizController');
+import { saveTopicQuizResult, getTopicQuizHistory } from '../controllers/topicQuizController.js';
 
-router.post('/generate-quiz', generateTopicQuiz);
+router.post('/save-result', saveTopicQuizResult);
+router.get('/user/:userId/history', getTopicQuizHistory);
 
-module.exports = router;
+export default router;

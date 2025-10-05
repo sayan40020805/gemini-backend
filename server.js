@@ -12,6 +12,7 @@ import authRoutes from "./routes/authRoutes.js";
 import courseRoutes from "./routes/courseRoutes.js";
 import examRoutes from "./routes/examRoutes.js";
 import enhancedExamRoutes from "./routes/enhancedExamRoutes.js";
+import topicQuizRoutes from "./routes/topicQuizRoutes.js";
 import notesRoutes from "./routes/notesRoutes.js";
 import progressRoutes from "./routes/progressRoutes.js";
 
@@ -49,6 +50,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/courses", courseRoutes);
 app.use("/api/exams", examRoutes);
 app.use("/api/enhanced-exams", enhancedExamRoutes);
+app.use("/api/topic-quiz", topicQuizRoutes);
 app.use("/api/notes", notesRoutes);
 app.use("/api/progress", progressRoutes);
 app.use("/api", enhancedCourseRoutes);

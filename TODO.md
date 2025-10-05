@@ -1,46 +1,55 @@
-# Backend Modifications for Frontend API Compatibility
+# Backend Modifications for apifreellm API Integration
 
 ## Completed Tasks
 
-### 1. Added Deepseek API Route
-- Created `routes/deepseekRoutes.js` to handle `/api/deepseek/ask` endpoint
-- Imported and used the same `askGemini` controller from `geminiController.js`
-- Updated `server.js` to include the new deepseek routes
+### 1. Replaced Deepseek with apifreellm for Chat/AI Responses
+- Updated `controllers/geminiController.js` to use apifreellm API instead of Deepseek
+- Changed from OpenAI client to simple fetch POST to `https://apifreellm.com/api/chat`
+- Updated mock responses and error handling for apifreellm
+- Removed dependency on `DEEPSEEK_API_KEY`
 
-### 2. Fixed Enhanced Exam Generation 500 Error
-- Modified `controllers/enhancedExamController.js` to handle missing `DEEPSEEK_API_KEY`
-- Changed the API key check to throw an error instead of returning 500, allowing the existing mock fallback logic to work
-- Now when API key is not configured (e.g., on render.com), the endpoint will return mock exam data instead of failing
+### 2. Updated Topic Quiz System for Frontend Generation
+- Removed `generateTopicQuiz` function from `controllers/topicQuizController.js` (quiz generation now handled by frontend using apifreellm)
+- Added `saveTopicQuizResult` function to save quiz results to database
+- Added `getTopicQuizHistory` function to fetch user's quiz history
+- Created new `models/TopicQuizResult.js` with schema for storing quiz results
+- Updated `routes/topicQuizRoutes.js` to include `/save-result` and `/user/:userId/history` endpoints
+- Removed `/generate-quiz` endpoint
 
-### 3. Fixed Syntax Errors in Routes
-- Removed duplicate and misplaced code in `routes/enhancedExamRoutes.js`
-- Server now starts without errors
+### 3. Updated Test Files
+- Modified `test-topicQuiz.js` to test the new save-result and history endpoints instead of the old generate-quiz
 
-### 4. Improved Mock Responses
-- Updated `controllers/geminiController.js` to return dynamic mock responses based on the prompt instead of static text
-- Chatbox now provides varied responses for different prompts
+### 4. Maintained Existing Functionality
+- Kept all existing routes and controllers for auth, YouTube, enhanced exams, traditional exams, notes, progress
+- Enhanced exams still use mock data when API key is missing (unchanged)
+- All other backend functionality remains intact
 
-### 5. Added Subjects Endpoint
-- Added GET `/api/enhanced-exams/subjects` route to return a list of available subjects
-- Frontend can now fetch subjects for the dropdown
+## Database Schema Changes
+- Added `TopicQuizResult` collection with fields:
+  - userId (ObjectId, ref: User)
+  - topic (String)
+  - difficulty (enum: easy/medium/hard)
+  - totalQuestions (Number)
+  - correctAnswers (Number)
+  - percentage (Number)
+  - answers (Array of objects with questionIndex, selectedAnswer, correctAnswer)
+  - date (Date, default: now)
 
-### 6. Created Frontend API Utility
-- Created `src/utils/api.js` with axios instance configured for correct base URL
-- Handles both development (localhost:5000) and production (render.com) environments
-
-### 7. Improved Mock Exam Options
-- Updated mock exam questions to have more realistic and varied option text instead of generic "Option A, B, C, D"
+## API Endpoints Changes
+- **REMOVED**: `POST /api/topic-quiz/generate-quiz` (quiz generation moved to frontend)
+- **ADDED**: `POST /api/topic-quiz/save-result` (save quiz results)
+- **ADDED**: `GET /api/topic-quiz/user/:userId/history` (fetch quiz history)
+- **UPDATED**: `POST /api/gemini/ask` and `POST /api/deepseek/ask` now use apifreellm API
 
 ## Summary
-- Frontend calls to `/api/deepseek/ask` now work (previously 404)
-- Frontend calls to `/api/enhanced-exams/generate` now work with mock data when API key is missing (previously 500)
-- Added `/api/enhanced-exams/subjects` endpoint for subject selection
-- Backend is compatible with frontend API expectations
-- Chatbox responses are now dynamic and not repetitive
-- Mock exam options are more descriptive
+- Backend now supports frontend-generated quizzes using apifreellm API
+- Quiz results are properly saved and can be retrieved for dashboard display
+- Chat/AI responses use free apifreellm API instead of paid Deepseek
+- All existing functionality preserved
+- Dashboard should now show topic quiz results after completion
 
 ## Next Steps for User
-- Copy `src/utils/api.js` to your frontend project and update the import paths in your React components
-- Redeploy the backend to apply the new routes and CORS settings
-- Set a valid `DEEPSEEK_API_KEY` environment variable on your deployment platform to use real AI instead of mock responses
-- Update your frontend components to use the API utility instead of direct axios calls
+- Ensure frontend calls the new `/api/topic-quiz/save-result` endpoint after quiz completion
+- Frontend should call `/api/topic-quiz/user/:userId/history` to display quiz results in dashboard
+- Test the updated endpoints using the modified test files
+- Redeploy backend with the new changes

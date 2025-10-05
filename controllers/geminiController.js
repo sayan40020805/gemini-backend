@@ -1,5 +1,3 @@
-import OpenAI from "openai";
-
 export const askGemini = async (req, res) => {
   try {
     const { prompt } = req.body;
@@ -8,53 +6,44 @@ export const askGemini = async (req, res) => {
       return res.status(400).json({ error: "Prompt is required" });
     }
 
-    // Allow a quick 'mock' mode for local testing without a real Deepseek key.
-    // Can be enabled with header 'X-Use-Mock: true', query ?mock=true, or env DEEPSEEK_USE_MOCK=true
+    // Allow a quick 'mock' mode for local testing without a real API key.
+    // Can be enabled with header 'X-Use-Mock: true', query ?mock=true, or env APIREELLM_USE_MOCK=true
     const useMock =
       req.headers["x-use-mock"] === "true" ||
       req.query?.mock === "true" ||
-      process.env.DEEPSEEK_USE_MOCK === "true";
+      process.env.APIREELLM_USE_MOCK === "true";
 
     if (useMock) {
       // Return a mock response based on the prompt
-      const mockText = `Mock response to "${prompt}": Hello! This is a simulated response from Deepseek AI. In a real scenario, I would provide a detailed answer to your question.`;
+      const mockText = `Mock response to "${prompt}": Hello! This is a simulated response from apifreellm AI. In a real scenario, I would provide a detailed answer to your question.`;
       return res.status(200).json({ message: mockText });
     }
 
-    const apiKey = process.env.DEEPSEEK_API_KEY;
-
-    if (!apiKey) {
-      return res.status(500).json({ error: "DEEPSEEK_API_KEY not found" });
-    }
-
     try {
-      const client = new OpenAI({
-        apiKey: apiKey,
-        baseURL: "https://api.deepseek.com",
+      const response = await fetch('https://apifreellm.com/api/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ message: prompt })
       });
 
-      const completion = await client.chat.completions.create({
-        model: "deepseek-chat",
-        messages: [
-          {
-            role: "user",
-            content: prompt,
-          },
-        ],
-      });
+      const data = await response.json();
 
-      const text = completion.choices[0]?.message?.content;
-
-      if (!text) {
-        return res.status(500).json({ error: "Empty response from Deepseek API" });
+      if (data.status === 'success') {
+        return res.status(200).json({ message: data.response });
+      } else {
+        console.error("❌ apifreellm API error:", data.error);
+        // Fallback to mock response when API fails
+        console.log("🔄 Falling back to mock response due to API error");
+        const mockText = `Mock response to "${prompt}": Hello! This is a simulated response from apifreellm AI. In a real scenario, I would provide a detailed answer to your question.`;
+        return res.status(200).json({ message: mockText });
       }
-
-      return res.status(200).json({ message: text });
-    } catch (libErr) {
-      console.error("❌ Deepseek client error:", libErr);
+    } catch (apiErr) {
+      console.error("❌ apifreellm client error:", apiErr);
       // Fallback to mock response when API fails
       console.log("🔄 Falling back to mock response due to API error");
-      const mockText = `Mock response to "${prompt}": Hello! This is a simulated response from Deepseek AI. In a real scenario, I would provide a detailed answer to your question.`;
+      const mockText = `Mock response to "${prompt}": Hello! This is a simulated response from apifreellm AI. In a real scenario, I would provide a detailed answer to your question.`;
       return res.status(200).json({ message: mockText });
     }
   } catch (error) {
