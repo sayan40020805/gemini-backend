@@ -1,3 +1,5 @@
+import { GoogleGenerativeAI } from '@google/generative-ai';
+
 export const askGemini = async (req, res) => {
   try {
     const { prompt } = req.body;
@@ -15,35 +17,33 @@ export const askGemini = async (req, res) => {
 
     if (useMock) {
       // Return a mock response based on the prompt
-      const mockText = `Mock response to "${prompt}": Hello! This is a simulated response from apifreellm AI. In a real scenario, I would provide a detailed answer to your question.`;
+      const mockText = `Mock response to "${prompt}": Hello! This is a simulated response from Gemini AI. In a real scenario, I would provide a detailed answer to your question.`;
+      return res.status(200).json({ message: mockText });
+    }
+
+    const apiKey = process.env.GEMINI_API_KEY || 'AIzaSyALpSJXroC94nSWhoDdXz286WJ1hNfCP5U'; // Provided Gemini API key
+
+    if (!apiKey) {
+      console.error("❌ Gemini API key not configured");
+      // Fallback to mock response
+      const mockText = `Mock response to "${prompt}": Hello! This is a simulated response from Gemini AI. In a real scenario, I would provide a detailed answer to your question.`;
       return res.status(200).json({ message: mockText });
     }
 
     try {
-      const response = await fetch('https://apifreellm.com/api/chat', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ message: prompt })
-      });
+      const genAI = new GoogleGenerativeAI(apiKey);
+      const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
 
-      const data = await response.json();
+      const result = await model.generateContent(prompt);
+      const response = await result.response;
+      const text = response.text();
 
-      if (data.status === 'success') {
-        return res.status(200).json({ message: data.response });
-      } else {
-        console.error("❌ apifreellm API error:", data.error);
-        // Fallback to mock response when API fails
-        console.log("🔄 Falling back to mock response due to API error");
-        const mockText = `Mock response to "${prompt}": Hello! This is a simulated response from apifreellm AI. In a real scenario, I would provide a detailed answer to your question.`;
-        return res.status(200).json({ message: mockText });
-      }
+      return res.status(200).json({ message: text });
     } catch (apiErr) {
-      console.error("❌ apifreellm client error:", apiErr);
+      console.error("❌ Gemini API error:", apiErr);
       // Fallback to mock response when API fails
       console.log("🔄 Falling back to mock response due to API error");
-      const mockText = `Mock response to "${prompt}": Hello! This is a simulated response from apifreellm AI. In a real scenario, I would provide a detailed answer to your question.`;
+      const mockText = `Mock response to "${prompt}": Hello! This is a simulated response from Gemini AI. In a real scenario, I would provide a detailed answer to your question.`;
       return res.status(200).json({ message: mockText });
     }
   } catch (error) {

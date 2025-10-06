@@ -1,7 +1,7 @@
 import EnhancedExam from "../models/EnhancedExam.js";
 import EnhancedSubmission from "../models/EnhancedSubmission.js";
 import User from "../models/User.js";
-import OpenAI from "openai";
+import { GoogleGenerativeAI } from '@google/generative-ai';
 
 // POST /api/enhanced-exams/generate
 export const generateExam = async (req, res) => {
@@ -22,9 +22,9 @@ export const generateExam = async (req, res) => {
   }
 
   try {
-    const apiKey = process.env.DEEPSEEK_API_KEY;
+    const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) {
-      throw new Error("API key not configured");
+      throw new Error("Gemini API key not configured");
     }
 
     const prompt = "Generate " + questionCount + " multiple choice questions for the subject \"" + subject + "\" at " + difficulty + " difficulty level.\n" +
@@ -41,24 +41,14 @@ export const generateExam = async (req, res) => {
       "  ]\n" +
       "}";
 
-    const client = new OpenAI({
-      apiKey: apiKey,
-      baseURL: "https://api.deepseek.com",
-    });
+    const genAI = new GoogleGenerativeAI(apiKey);
+    const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
 
-    console.log("Sending prompt to Deepseek:", prompt);
+    console.log("Sending prompt to Gemini:", prompt);
 
-    const completion = await client.chat.completions.create({
-      model: "deepseek-chat",
-      messages: [
-        {
-          role: "user",
-          content: prompt,
-        },
-      ],
-    });
-
-    const text = completion.choices[0]?.message?.content;
+    const result = await model.generateContent(prompt);
+    const response = await result.response;
+    const text = response.text();
 
     console.log("Deepseek raw response:", text);
 
