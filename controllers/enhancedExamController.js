@@ -1,7 +1,7 @@
 import EnhancedExam from "../models/EnhancedExam.js";
 import EnhancedSubmission from "../models/EnhancedSubmission.js";
 import User from "../models/User.js";
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import axios from 'axios';
 
 // POST /api/enhanced-exams/generate
 export const generateExam = async (req, res) => {
@@ -22,11 +22,6 @@ export const generateExam = async (req, res) => {
   }
 
   try {
-    const apiKey = process.env.GEMINI_API_KEY;
-    if (!apiKey) {
-      throw new Error("Gemini API key not configured");
-    }
-
     const prompt = "Generate " + questionCount + " multiple choice questions for the subject \"" + subject + "\" at " + difficulty + " difficulty level.\n" +
       "Each question should have 4 options (A, B, C, D) with one correct answer.\n" +
       "Return the response in JSON format with this structure:\n" +
@@ -41,18 +36,20 @@ export const generateExam = async (req, res) => {
       "  ]\n" +
       "}";
 
-    const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
+    console.log("Sending prompt to apifreellm:", prompt);
 
-    console.log("Sending prompt to Gemini:", prompt);
+    const apiResponse = await axios.post('https://apifreellm.com/api/chat', {
+      messages: [{
+        role: 'user',
+        content: prompt
+      }],
+      stream: false
+    });
 
-    const result = await model.generateContent(prompt);
-    const response = await result.response;
-    const text = response.text();
+    const text = apiResponse.data.choices[0].message.content;
+    console.log("apifreellm raw response:", text);
 
-    console.log("Deepseek raw response:", text);
-
-    // Parse Gemini response
+    // Parse apifreellm response
     let examData;
     try {
       let cleanedText = text.trim();
@@ -75,14 +72,14 @@ export const generateExam = async (req, res) => {
           examData = JSON.parse(jsonString);
         } else {
           console.error("No JSON object found in response");
-          throw new Error("Invalid response format from Gemini");
+          throw new Error("Invalid response format from apifreellm");
         }
       } else {
         console.log("JSON match:", jsonMatch[0]);
         examData = JSON.parse(jsonMatch[0]);
       }
 
-      if (!examData.questions || !Array.isArray(examData.questions)) {
+      if (!examData || !examData.questions || !Array.isArray(examData.questions)) {
         throw new Error("Invalid questions format");
       }
 
@@ -100,7 +97,7 @@ export const generateExam = async (req, res) => {
       });
     } catch (parseError) {
       console.error("JSON parsing error:", parseError);
-      console.error("Raw Gemini response:", text);
+      console.error("Raw apifreellm response:", text);
       return res.status(500).json({
         success: false,
         error: "Failed to parse exam data: " + parseError.message + ". Raw response: " + text.substring(0, 500) + "..."
@@ -132,7 +129,7 @@ export const generateExam = async (req, res) => {
     });
   } catch (err) {
     console.error("Generate exam error:", err.message);
-    // Fallback to mock exam generation when API fails or API key missing
+    // Fallback to mock exam generation when API fails
     console.log("🔄 Falling back to mock exam generation due to API error");
 
     const mockQuestions = [

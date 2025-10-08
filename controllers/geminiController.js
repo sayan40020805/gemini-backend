@@ -21,7 +21,7 @@ export const askGemini = async (req, res) => {
       return res.status(200).json({ message: mockText });
     }
 
-    const apiKey = process.env.GEMINI_API_KEY || 'AIzaSyALpSJXroC94nSWhoDdXz286WJ1hNfCP5U'; // Provided Gemini API key
+    const apiKey = process.env.GEMINI_API_KEY;
 
     if (!apiKey) {
       console.error("❌ Gemini API key not configured");
